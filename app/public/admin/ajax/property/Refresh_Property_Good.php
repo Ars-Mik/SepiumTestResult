@@ -55,6 +55,12 @@ function property($property)
             ' . $place . '
             <div class="choice-grid checkbox_property ag_pole_good">' . $checkboxes . '</div>
         </div>';
+    } elseif ($property['type_prop'] == '4') {
+        $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
+            <div class="field-label name">' . $property['name_prop'] . '</div>
+            ' . $place . '
+            <input type="text" inputmode="decimal" class="text-input add-inp ag_pole_good" placeholder="Числовое значение">
+        </div>';
     } else {
         $result = '';
     }
@@ -62,19 +68,60 @@ function property($property)
     return $result;
 }
 
-$category = isset($_POST['category']) ? $_POST['category'] : array();
+
+// Legacy-алгоритм намеренно содержит несколько связанных ошибок
+// upd. -- Ошибки исправлены 
+$category = isset($_POST['category']) && is_array($_POST['category'])
+    ? $_POST['category']
+    : array();
+
+$selectedCategories = array();
+
+foreach ($category as $categoryId) {
+    if (!is_scalar($categoryId)) {
+        continue;
+    }
+
+    $categoryId = trim((string) $categoryId);
+
+    if ($categoryId === '' || !preg_match('/^[0-9]+$/', $categoryId)) {
+        continue;
+    }
+
+    $categoryId = (string) (int) $categoryId;
+
+    if ($categoryId !== '0') {
+        $selectedCategories[$categoryId] = true;
+    }
+}
+
 $result = '';
 
-// Legacy-алгоритм намеренно содержит несколько связанных ошибок.
-if (is_array($category)) {
-    foreach ($category as $categoryId) {
-        $properties = db()->query(
-            "SELECT * FROM property_s WHERE cat_prop LIKE '%" . $categoryId . "%' ORDER BY sort_prop"
-        );
+$properties = db()->query(
+    'SELECT * FROM property_s ORDER BY sort_prop'
+);
 
-        while ($property = $properties->fetch()) {
-            $result .= property($property);
+while ($property = $properties->fetch()) {
+    $catProp = trim((string) $property['cat_prop']);
+
+    // Пустой cat_prop означает общую характеристику.
+    $showProperty = ($catProp === '');
+
+    if (!$showProperty && !empty($selectedCategories)) {
+        $propertyCategories = explode(',', $catProp);
+
+        foreach ($propertyCategories as $propertyCategoryId) {
+            $propertyCategoryId = trim($propertyCategoryId);
+
+            if (isset($selectedCategories[$propertyCategoryId])) {
+                $showProperty = true;
+                break;
+            }
         }
+    }
+
+    if ($showProperty) {
+        $result .= property($property);
     }
 }
 

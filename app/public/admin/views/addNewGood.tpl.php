@@ -64,7 +64,7 @@ function property($property)
     return $result;
 }
 
-$properties = db()->query('SELECT * FROM property_s ORDER BY sort_prop');
+$properties = db()->query("SELECT * FROM property_s WHERE cat_prop = '' ORDER BY sort_prop");
 ?>
 <section class="scenario-column app-window">
     <header class="app-window-bar">
