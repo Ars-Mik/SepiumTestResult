@@ -1,0 +1,37 @@
+services:
+  db:
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_DATABASE: catalog_demo
+      MYSQL_USER: catalog_user
+      MYSQL_PASSWORD: catalog_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - demo-db:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_password"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  web:
+    build: .
+    platform: linux/amd64
+    environment:
+      DB_HOST: db
+      DB_NAME: catalog_demo
+      DB_USER: catalog_user
+      DB_PASSWORD: catalog_password
+    ports:
+      - "8080:80"
+    volumes:
+      - ./app:/var/www/app
+      - ./tests:/var/www/tests:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  demo-db:
