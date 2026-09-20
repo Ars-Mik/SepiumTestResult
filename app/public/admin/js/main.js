@@ -15,12 +15,51 @@
     function collectPropertyValues() {
         var propertyMas = {};
 
-        $('.name_select_rielt').each(function () {
-            var propertyId = $(this).attr('data-property');
-            var value = $(this).find('input.ag_pole_good, select.ag_pole_good').first().val();
+        $('.property_all .name_select_rielt').each(function () {
+            var $field = $(this);
+            var propertyId = $field.attr('data-property');
 
-            if (value !== undefined && value !== '') {
-                propertyMas[propertyId] = value;
+            if (propertyId === undefined || propertyId === '') {
+                return;
+            }
+
+            var $multiple = $field.find('.checkbox_property');
+
+            if ($multiple.length) {
+                var selectedValues = [];
+
+                $multiple.find('.line_chek').each(function () {
+                    var $choice = $(this);
+                    var $checkbox = $choice.find('input[type="checkbox"]');
+
+                    if ($checkbox.prop('checked')) {
+                        var value = $choice.find('.ckeck_param').attr('data-val');
+
+                        if (value !== undefined && value !== '') {
+                            selectedValues[selectedValues.length] = value;
+                        }
+                    }
+                });
+
+                if (selectedValues.length) {
+                    propertyMas[propertyId] = selectedValues.join(':::');
+                }
+
+                return;
+            }
+
+            var $control = $field
+                .find('input.ag_pole_good, select.ag_pole_good')
+                .first();
+
+            if (!$control.length) {
+                return;
+            }
+
+            var value = $control.val();
+
+            if (value !== undefined && value !== null && value !== '') {
+                propertyMas[propertyId] = String(value);
             }
         });
 
